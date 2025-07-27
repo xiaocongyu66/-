@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>域名长链接生成器</title>
+    <style>
+        body {
+            background-color: #1a1a1a; /* 深黑色背景 */
+            color: #00ff00; /* 亮绿色文本 */
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: #000000; /* 纯黑容器 */
+            border: 2px solid #00ff00; /* 绿色边框 */
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); /* 绿色光影 */
+        }
+        h1 {
+            color: #00ff00;
+            text-shadow: 0 0 5px #008000;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-size: 1.1em;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #333333; /* 深灰输入框 */
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #008000; /* 深绿色按钮 */
+            color: #000000; /* 黑色文本 */
+            border: none;
+            padding: 12px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #00ff00; /* hover 时亮绿 */
+            color: #1a1a1a;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #222222; /* 深灰输出区 */
+            border: 1px dashed #00ff00;
+            border-radius: 5px;
+            word-wrap: break-word;
+        }
+        #redirectMessage {
+            margin-top: 20px;
+            color: #ffffff; /* 白色文本以突出 */
+            background-color: #008000; /* 深绿背景 */
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>域名长链接生成器</h1>
+        <p>输入域名，生成 Base64 编码的长链接。访问链接时自动跳转到原始域名。</p>
+        
+        <label for="inputDomain">输入域名（例如 example.com 或 https://example.com）：</label>
+        <textarea id="inputDomain" rows="4" placeholder="在此输入域名..."></textarea>
+        
+        <button onclick="generateLongLink()">生成长链接</button>
+        
+        <div id="output"></div>
+        
+        <div id="redirectMessage"></div>
+    </div>
+    
+    <script>
+        // 自动检查 URL 参数并跳转
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const data = urlParams.get('data');
+            if (data) {
+                try {
+                    const decoded = atob(data); // Base64 解码
+                    const redirectMessage = document.getElementById('redirectMessage');
+                    redirectMessage.innerHTML = `
+                        <h2>正在跳转...</h2>
+                        <p>目标域名： <a href="${decoded}" style="color: #00ff00;">${decoded}</a></p>
+                        <p>如果未自动跳转，请点击链接。</p>
+                    `;
+                    redirectMessage.style.display = 'block';
+                    
+                    // 2秒延迟后跳转
+                    setTimeout(() => {
+                        window.location.href = decoded;
+                    }, 2000);
+                } catch (error) {
+                    document.getElementById('redirectMessage').innerHTML = '<p style="color: red;">跳转失败：无效的 Base64 数据。</p>';
+                    document.getElementById('redirectMessage').style.display = 'block';
+                }
+            }
+        };
+
+        function generateLongLink() {
+            let inputDomain = document.getElementById('inputDomain').value.trim();
+            if (!inputDomain) {
+                document.getElementById('output').innerHTML = '<p style="color: red;">请输入域名！</p>';
+                return;
+            }
+            
+            // 如果没有协议，添加 https://
+            if (!inputDomain.startsWith('http://') && !inputDomain.startsWith('https://')) {
+                inputDomain = 'https://' + inputDomain;
+            }
+            
+            try {
+                const base64Encoded = btoa(inputDomain); // Base64 编码
+                const currentUrl = window.location.href.split('?')[0]; // 获取当前页面 URL（无参数）
+                const longLink = `${currentUrl}?data=${encodeURIComponent(base64Encoded)}`;
+                
+                document.getElementById('output').innerHTML = `
+                    <h2>生成的长链接：</h2>
+                    <p><a href="${longLink}" target="_blank" style="color: #00ff00;">${longLink}</a></p>
+                    <p>复制并分享此链接！访问时会自动跳转。</p>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = '<p style="color: red;">生成失败：' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
